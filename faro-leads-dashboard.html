@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex">
+<title>El Faro · Radar de Prospección</title>
+<style>
+  :root{
+    --noche:#14181D; --panel:#1C2229; --panel2:#232B34; --linea:#2E3843;
+    --tinta:#E8EDF2; --tinta2:#93A1AF; --tinta3:#5C6B7A;
+    --destello:#E8A33D; --destello-suave:rgba(232,163,61,.14);
+    --ok:#5FBF8A; --frio:#4A90C2; --rojo:#C96A5B;
+    --mono:'IBM Plex Mono',ui-monospace,'Cascadia Mono',Menlo,monospace;
+    --sans:'Space Grotesk','Archivo',system-ui,-apple-system,sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--noche);color:var(--tinta);font-family:var(--sans);font-size:15px;line-height:1.5;min-height:100vh}
+  a{color:var(--destello)}
+  .wrap{max-width:1240px;margin:0 auto;padding:0 20px 60px}
+
+  header{display:flex;align-items:center;gap:14px;padding:22px 0 18px;border-bottom:1px solid var(--linea);flex-wrap:wrap}
+  .faro-logo{width:34px;height:34px;flex:none}
+  h1{font-size:1.15rem;font-weight:600;letter-spacing:.01em}
+  h1 small{display:block;font-family:var(--mono);font-size:.68rem;color:var(--tinta3);font-weight:400;letter-spacing:.08em;text-transform:uppercase}
+  .hd-acciones{margin-left:auto;display:flex;gap:10px;align-items:center}
+  .estado-fuente{font-family:var(--mono);font-size:.7rem;color:var(--tinta3)}
+  .estado-fuente b{color:var(--destello);font-weight:500}
+
+  .btn{background:var(--panel2);border:1px solid var(--linea);color:var(--tinta);border-radius:8px;
+       padding:7px 14px;font-family:var(--sans);font-size:.82rem;cursor:pointer;transition:border-color .15s}
+  .btn:hover{border-color:var(--destello)}
+  .btn:focus-visible{outline:2px solid var(--destello);outline-offset:2px}
+  .btn-destello{background:var(--destello);border-color:var(--destello);color:#1A130A;font-weight:600}
+  .btn-mini{padding:4px 10px;font-size:.74rem;border-radius:6px}
+
+  nav{display:flex;gap:4px;margin:18px 0 16px}
+  nav .btn{border-radius:8px 8px 0 0;border-bottom:2px solid transparent;background:none;border-left:none;border-right:none;border-top:none;color:var(--tinta2);padding:8px 16px}
+  nav .btn.activa{color:var(--tinta);border-bottom-color:var(--destello)}
+
+  .filtros{display:flex;gap:10px;flex-wrap:wrap;align-items:end;background:var(--panel);
+           border:1px solid var(--linea);border-radius:12px;padding:14px 16px;margin-bottom:18px}
+  .filtro label{display:block;font-family:var(--mono);font-size:.62rem;letter-spacing:.1em;
+                text-transform:uppercase;color:var(--tinta3);margin-bottom:5px}
+  select,input[type=text]{background:var(--noche);border:1px solid var(--linea);color:var(--tinta);
+    border-radius:7px;padding:7px 10px;font-family:var(--sans);font-size:.84rem;min-width:130px}
+  input[type=range]{accent-color:var(--destello);width:120px;display:block;margin-top:8px}
+  select:focus,input:focus{outline:1px solid var(--destello);border-color:var(--destello)}
+  .contador{margin-left:auto;font-family:var(--mono);font-size:.72rem;color:var(--tinta2);align-self:center}
+
+  table{width:100%;border-collapse:collapse;background:var(--panel);border:1px solid var(--linea);border-radius:12px;overflow:hidden}
+  thead th{font-family:var(--mono);font-size:.64rem;letter-spacing:.1em;text-transform:uppercase;
+           color:var(--tinta3);text-align:left;padding:11px 12px;border-bottom:1px solid var(--linea);font-weight:500}
+  tbody td{padding:11px 12px;border-bottom:1px solid var(--linea);vertical-align:middle;font-size:.86rem}
+  tbody tr:last-child td{border-bottom:none}
+  tbody tr:hover{background:var(--panel2)}
+  .celda-negocio b{font-weight:600}
+  .celda-negocio span{display:block;font-size:.74rem;color:var(--tinta2)}
+
+  .haz{display:flex;align-items:center;gap:8px;min-width:110px}
+  .haz-num{font-family:var(--mono);font-size:.9rem;font-weight:500;width:2ch;text-align:right}
+  .haz-barra{flex:1;height:5px;background:var(--noche);border-radius:3px;overflow:hidden}
+  .haz-luz{height:100%;border-radius:3px;background:linear-gradient(90deg,rgba(232,163,61,.35),var(--destello));
+           box-shadow:0 0 8px rgba(232,163,61,.5)}
+  .haz.frio .haz-luz{background:var(--tinta3);box-shadow:none}
+
+  .chip{display:inline-block;font-family:var(--mono);font-size:.64rem;letter-spacing:.05em;
+        padding:2.5px 8px;border-radius:20px;border:1px solid var(--linea);color:var(--tinta2);white-space:nowrap}
+  .chip.sin-web{border-color:var(--destello);color:var(--destello);background:var(--destello-suave)}
+  .chip.plantilla{border-color:#B98A3A;color:#DDB268}
+  .chip.web-mala{border-color:var(--frio);color:#7FB2D8}
+  .chip.est-cerrado{border-color:var(--ok);color:var(--ok)}
+  .chip.est-descartado{border-color:var(--rojo);color:var(--rojo)}
+
+  .acciones-lead{display:flex;gap:6px;flex-wrap:wrap}
+
+  .kanban{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(215px,1fr);gap:12px;overflow-x:auto;padding-bottom:10px}
+  .col-k{background:var(--panel);border:1px solid var(--linea);border-radius:12px;padding:12px;min-height:180px}
+  .col-k h3{font-family:var(--mono);font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;
+            color:var(--tinta2);margin-bottom:10px;display:flex;justify-content:space-between}
+  .col-k h3 em{font-style:normal;color:var(--destello)}
+  .tarjeta{background:var(--panel2);border:1px solid var(--linea);border-radius:9px;padding:10px;margin-bottom:8px}
+  .tarjeta b{font-size:.84rem;display:block}
+  .tarjeta .meta{font-family:var(--mono);font-size:.66rem;color:var(--tinta2);margin:3px 0 7px}
+  .nota-kanban{font-size:.76rem;color:var(--tinta3);margin-top:10px}
+
+  .calc{max-width:640px;background:var(--panel);border:1px solid var(--linea);border-radius:12px;padding:22px}
+  .calc h2{font-size:.95rem;margin-bottom:4px}
+  .calc p.sub{font-size:.78rem;color:var(--tinta2);margin-bottom:18px}
+  .grupo-calc{margin-bottom:16px}
+  .grupo-calc>label{display:block;font-family:var(--mono);font-size:.64rem;letter-spacing:.1em;
+                    text-transform:uppercase;color:var(--destello);margin-bottom:8px}
+  .opciones{display:flex;flex-wrap:wrap;gap:7px}
+  .opciones label{display:flex;gap:6px;align-items:center;background:var(--noche);border:1px solid var(--linea);
+                  border-radius:8px;padding:6px 11px;font-size:.8rem;cursor:pointer}
+  .opciones label:has(input:checked){border-color:var(--destello);color:var(--destello)}
+  .opciones input{accent-color:var(--destello)}
+  .resultado-calc{display:flex;align-items:center;gap:16px;border-top:1px solid var(--linea);padding-top:16px;margin-top:6px}
+  .resultado-num{font-family:var(--mono);font-size:2.4rem;font-weight:600;color:var(--destello)}
+  .resultado-txt b{display:block}
+  .resultado-txt span{font-size:.78rem;color:var(--tinta2)}
+
+  .vacio{padding:40px;text-align:center;color:var(--tinta3);font-size:.86rem}
+  .aviso-demo{font-family:var(--mono);font-size:.68rem;color:var(--noche);background:var(--destello);
+              border-radius:7px;padding:6px 12px;margin-bottom:14px;display:inline-block}
+  .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--destello);color:#1A130A;
+         font-size:.82rem;font-weight:600;padding:9px 18px;border-radius:9px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:50}
+  .toast.visible{opacity:1}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+  @media (max-width:760px){ .oculta-mobile{display:none} .contador{margin-left:0} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <svg class="faro-logo" viewBox="0 0 34 34" aria-hidden="true">
+      <path d="M13 30 L15 8 H19 L21 30 Z" fill="none" stroke="#93A1AF" stroke-width="1.4"/>
+      <rect x="14.4" y="4" width="5.2" height="4" fill="none" stroke="#93A1AF" stroke-width="1.4"/>
+      <path d="M20 6 L33 1.5 V10.5 Z" fill="rgba(232,163,61,.28)"/>
+      <circle cx="17" cy="6" r="1.6" fill="#E8A33D"/>
+      <line x1="6" y1="30" x2="28" y2="30" stroke="#93A1AF" stroke-width="1.4"/>
+    </svg>
+    <h1>Radar de Prospección<small>El Faro · Estrategia 2 · leads calificados por vertical</small></h1>
+    <div class="hd-acciones">
+      <span class="estado-fuente" id="fuente-estado"></span>
+      <button class="btn btn-mini" id="btn-recargar" type="button">↻ Recargar</button>
+      <button class="btn btn-mini btn-destello" id="btn-sheet" type="button">Abrir Sheet</button>
+    </div>
+  </header>
+
+  <nav aria-label="Vistas">
+    <button class="btn activa" data-vista="lista" type="button">Lista</button>
+    <button class="btn" data-vista="pipeline" type="button">Pipeline</button>
+    <button class="btn" data-vista="calc" type="button">Calculadora de score</button>
+  </nav>
+
+  <div id="aviso-demo" class="aviso-demo" hidden>MODO DEMO — configurá CSV_URL en el CONFIG para leer tu Sheet real</div>
+
+  <section class="filtros" id="filtros">
+    <div class="filtro"><label for="f-vertical">Vertical</label>
+      <select id="f-vertical"><option value="">Todas</option>
+        <option>turismo</option><option>estetica</option><option>profesionales</option>
+        <option>salud</option><option>inmobiliarias</option></select></div>
+    <div class="filtro"><label for="f-pais">País</label>
+      <select id="f-pais"><option value="">Todos</option><option>AR</option><option>CL</option></select></div>
+    <div class="filtro"><label for="f-estado">Estado</label>
+      <select id="f-estado"><option value="">Todos</option>
+        <option>nuevo</option><option>calificado</option><option>contactado</option><option>respondio</option>
+        <option>llamada</option><option>propuesta</option><option>cerrado</option><option>descartado</option></select></div>
+    <div class="filtro"><label for="f-score">Score mín: <span id="f-score-val">0</span></label>
+      <input type="range" id="f-score" min="0" max="100" step="5" value="0"></div>
+    <div class="filtro"><label for="f-texto">Buscar</label>
+      <input type="text" id="f-texto" placeholder="negocio o zona…"></div>
+    <span class="contador" id="contador"></span>
+  </section>
+
+  <main>
+    <section id="vista-lista"><div id="tabla-cont"></div></section>
+    <section id="vista-pipeline" hidden>
+      <div class="kanban" id="kanban"></div>
+      <p class="nota-kanban">El pipeline se edita en la Sheet (columna <b>estado</b>) — la fecha se anota sola. Este tablero es de solo lectura a propósito: una sola fuente de verdad.</p>
+    </section>
+    <section id="vista-calc" hidden>
+      <div class="calc">
+        <h2>Calculadora de score</h2>
+        <p class="sub">La misma fórmula de la especificación: Brecha web (50) + Actividad (35) + Contactabilidad (15). Solo se puntúa lo que pasó la compuerta de vertical.</p>
+        <div class="grupo-calc"><label>A · Brecha web (elegir una)</label>
+          <div class="opciones" id="calc-web">
+            <label><input type="radio" name="cw" value="sin-web" checked>Sin web propia</label>
+            <label><input type="radio" name="cw" value="plantilla">Plantilla de plataforma</label>
+            <label><input type="radio" name="cw" value="web-mala">Dominio propio, web mala</label>
+            <label><input type="radio" name="cw" value="web-ok">Web decente</label>
+          </div></div>
+        <div class="grupo-calc"><label>B · Actividad</label>
+          <div class="opciones" id="calc-resena">
+            <label><input type="radio" name="cr" value="reciente" checked>Última reseña &lt; 3 meses</label>
+            <label><input type="radio" name="cr" value="media">3–12 meses</label>
+            <label><input type="radio" name="cr" value="vieja">&gt; 12 meses / sin reseñas</label>
+          </div>
+          <div class="opciones" style="margin-top:7px" id="calc-cant">
+            <label><input type="radio" name="cc" value="alta" checked>20+ reseñas</label>
+            <label><input type="radio" name="cc" value="media">5–19</label>
+            <label><input type="radio" name="cc" value="baja">&lt; 5</label>
+          </div>
+          <div class="opciones" style="margin-top:7px" id="calc-ig">
+            <label><input type="radio" name="ci" value="activo" checked>IG &lt; 1 mes</label>
+            <label><input type="radio" name="ci" value="medio">IG 1–3 meses</label>
+            <label><input type="radio" name="ci" value="inactivo">Sin IG / inactivo</label>
+          </div></div>
+        <div class="grupo-calc"><label>C · Contactabilidad</label>
+          <div class="opciones">
+            <label><input type="checkbox" id="calc-wsp" checked>WhatsApp / celular visible</label>
+            <label><input type="checkbox" id="calc-horario" checked>Horarios vigentes en Maps</label>
+          </div></div>
+        <div class="resultado-calc">
+          <span class="resultado-num" id="calc-num">100</span>
+          <div class="resultado-txt"><b id="calc-clas">Prioritario</b><span id="calc-detalle"></span></div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+/* ================= CONFIG ================= */
+const CONFIG = {
+  // URL del CSV publicado de la Sheet (Archivo → Compartir → Publicar en la web → CSV). Vacío = modo demo.
+  CSV_URL: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQYY1IB2-r8c6GAfM7LMd5oBlPDU9q9JWm5-2o56lBvfP1IIGCsnncndrG0dWQavjVcMxaLUmZsd3eW/pub?gid=0&single=true&output=csv',
+  // URL de edición de la Sheet (para el botón "Abrir Sheet")
+  SHEET_EDIT_URL: 'https://docs.google.com/spreadsheets/d/1eKOD9xTCOtsXgi_7g4c-Tomsvxw2JCXUAMhxbPgotw8/edit?gid=0#gid=0',
+  ESTADOS: ['nuevo','calificado','contactado','respondio','llamada','propuesta','cerrado','descartado']
+};
+
+/* ============ SCORING (fuente única de la fórmula) ============ */
+function faroScore(s){
+  const web = {'sin-web':50,'plantilla':42,'web-mala':30,'web-ok':5}[s.web] ?? 0;
+  const resena = {'reciente':15,'media':8,'vieja':0}[s.resenaUltima] ?? 0;
+  const cant = {'alta':10,'media':6,'baja':2}[s.resenasCant] ?? 0;
+  const ig = {'activo':10,'medio':5,'inactivo':0}[s.ig] ?? 0;
+  const contacto = (s.whatsapp?10:0)+(s.horario?5:0);
+  return web+resena+cant+ig+contacto;
+}
+function faroClasifica(n){ return n>=70?'Prioritario':n>=50?'Calificado':'No se trabaja'; }
+
+/* ============ PARSER CSV (maneja comillas y saltos dentro de campos) ============ */
+function faroParseCSV(texto){
+  const filas=[]; let fila=[], campo='', enComillas=false;
+  const t = texto.replace(/\r\n/g,'\n');
+  for(let i=0;i<t.length;i++){
+    const c=t[i];
+    if(enComillas){
+      if(c==='"'){ if(t[i+1]==='"'){campo+='"';i++;} else enComillas=false; }
+      else campo+=c;
+    } else if(c==='"') enComillas=true;
+    else if(c===','){ fila.push(campo); campo=''; }
+    else if(c==='\n'){ fila.push(campo); filas.push(fila); fila=[]; campo=''; }
+    else campo+=c;
+  }
+  if(campo!==''||fila.length){ fila.push(campo); filas.push(fila); }
+  if(!filas.length) return [];
+  const cab = filas[0].map(h=>h.trim().toLowerCase());
+  return filas.slice(1).filter(f=>f.some(v=>v.trim()!=='')).map(f=>{
+    const o={}; cab.forEach((h,i)=>o[h]=(f[i]||'').trim()); return o;
+  });
+}
+
+/* ============ DATOS DEMO ============ */
+const DEMO = [
+ {vertical:'estetica',negocio:'Estética Renacer',zona:'San Luis capital',pais:'AR',contacto:'+54 9 266 000-0001',web_url:'https://agendapro.com/renacer',senales_web:'plantilla',resenas_cant:'34',resena_ultima:'2026-06-20',actividad_ig:'activo',score:'92',estado:'calificado',notas:'seña ya instalada, ideal Halo'},
+ {vertical:'turismo',negocio:'Cabañas El Molle',zona:'Merlo',pais:'AR',contacto:'+54 9 266 000-0002',web_url:'',senales_web:'sin-web',resenas_cant:'58',resena_ultima:'2026-07-01',actividad_ig:'medio',score:'95',estado:'nuevo',notas:'vive de Booking, reseñas excelentes'},
+ {vertical:'profesionales',negocio:'Lic. Paula Vega — Psicóloga',zona:'Villa Mercedes',pais:'AR',contacto:'',web_url:'https://linktr.ee/pvega',senales_web:'sin-web',resenas_cant:'8',resena_ultima:'2026-04-10',actividad_ig:'activo',score:'74',estado:'contactado',notas:'sin WhatsApp visible, contactada por IG'},
+ {vertical:'salud',negocio:'Clínica Dental Sonrisa',zona:'San Luis capital',pais:'AR',contacto:'+54 9 266 000-0004',web_url:'https://doctoralia.com.ar/sonrisa',senales_web:'plantilla',resenas_cant:'21',resena_ultima:'2026-05-15',actividad_ig:'inactivo',score:'75',estado:'llamada',notas:'llamada jueves 10hs'},
+ {vertical:'inmobiliarias',negocio:'Inmobiliaria Sierras',zona:'Merlo',pais:'AR',contacto:'+54 9 266 000-0005',web_url:'https://sierras.tokkobroker.com',senales_web:'plantilla',resenas_cant:'12',resena_ultima:'2026-03-02',actividad_ig:'medio',score:'71',estado:'propuesta',notas:'plantilla Tokko calcada — pitch de captación de dueños'},
+ {vertical:'turismo',negocio:'Centro Recreativo Aguas Claras',zona:'Casablanca',pais:'CL',contacto:'+56 9 0000 0006',web_url:'http://aguasclaras.cl',senales_web:'web-mala',resenas_cant:'44',resena_ultima:'2026-06-28',actividad_ig:'activo',score:'85',estado:'nuevo',notas:'web sin HTTPS ni precios; vecino de El Progreso'},
+ {vertical:'estetica',negocio:'Spa Lumina',zona:'Valparaíso',pais:'CL',contacto:'+56 9 0000 0007',web_url:'',senales_web:'sin-web',resenas_cant:'3',resena_ultima:'2026-06-05',actividad_ig:'activo',score:'87',estado:'descartado',notas:'recién abierto — retomar en 3 meses'},
+ {vertical:'profesionales',negocio:'Estudio Contable Ríos',zona:'San Luis capital',pais:'AR',contacto:'+54 9 266 000-0008',web_url:'https://estudiorios.com.ar',senales_web:'web-ok',resenas_cant:'19',resena_ultima:'2025-01-11',actividad_ig:'inactivo',score:'26',estado:'descartado',notas:'web decente y poco activos — fuera'},
+ {vertical:'salud',negocio:'Veterinaria Patitas',zona:'Villa Mercedes',pais:'AR',contacto:'+54 9 266 000-0009',web_url:'',senales_web:'sin-web',resenas_cant:'67',resena_ultima:'2026-07-08',actividad_ig:'activo',score:'100',estado:'cerrado',notas:'CERRADO — pasó por ficha + primer mensaje'}
+];
+
+/* ============ ESTADO Y RENDER ============ */
+let LEADS=[], MODO_DEMO=false;
+const $=id=>document.getElementById(id);
+
+function filtrados(){
+  const v=$('f-vertical').value, p=$('f-pais').value, e=$('f-estado').value,
+        s=+$('f-score').value, t=$('f-texto').value.toLowerCase().trim();
+  return LEADS.filter(l=>
+    (!v||l.vertical===v)&&(!p||l.pais===p)&&(!e||l.estado===e)&&((+l.score||0)>=s)&&
+    (!t||(l.negocio+' '+l.zona).toLowerCase().includes(t))
+  ).sort((a,b)=>(+b.score||0)-(+a.score||0));
+}
+function esc(x){const d=document.createElement('div');d.textContent=x??'';return d.innerHTML;}
+
+function hazHTML(score){
+  const n=+score||0, frio=n<50?' frio':'';
+  return `<div class="haz${frio}"><span class="haz-num">${n}</span><div class="haz-barra"><div class="haz-luz" style="width:${n}%"></div></div></div>`;
+}
+function chipSenal(s){ return `<span class="chip ${esc(s)}">${esc(s||'—')}</span>`; }
+function chipEstado(e){ return `<span class="chip est-${esc(e)}">${esc(e)}</span>`; }
+
+function accionesHTML(l,i){
+  const skill = l.senales_web==='sin-web' ? 'ficha' : (l.senales_web==='web-ok' ? '' : 'auditoria');
+  let h='';
+  if(skill==='ficha') h+=`<button class="btn btn-mini" data-accion="ficha" data-i="${i}" type="button">→ Ficha de Nicho</button>`;
+  if(skill==='auditoria') h+=`<button class="btn btn-mini" data-accion="auditoria" data-i="${i}" type="button">→ Auditoría</button>`;
+  if(l.contacto) h+=`<a class="btn btn-mini" target="_blank" rel="noopener" href="https://wa.me/${l.contacto.replace(/\D/g,'')}">WhatsApp</a>`;
+  return `<div class="acciones-lead">${h||'<span class="chip">web ok — sin acción</span>'}</div>`;
+}
+
+function renderLista(){
+  const fs=filtrados();
+  $('contador').textContent=`${fs.length} de ${LEADS.length} leads`;
+  if(!fs.length){ $('tabla-cont').innerHTML='<div class="vacio">Ningún lead con estos filtros. Ampliá el rango o cargá la próxima campaña en la Sheet.</div>'; return; }
+  $('tabla-cont').innerHTML=`<table><thead><tr>
+    <th>Score</th><th>Negocio</th><th class="oculta-mobile">Vertical</th><th class="oculta-mobile">Señal web</th>
+    <th class="oculta-mobile">Reseñas</th><th>Estado</th><th>Acción</th></tr></thead><tbody>${
+    fs.map(l=>{const i=LEADS.indexOf(l);return `<tr>
+      <td>${hazHTML(l.score)}</td>
+      <td class="celda-negocio"><b>${esc(l.negocio)}</b><span>${esc(l.zona)} · ${esc(l.pais)}</span></td>
+      <td class="oculta-mobile">${esc(l.vertical)}</td>
+      <td class="oculta-mobile">${chipSenal(l.senales_web)}</td>
+      <td class="oculta-mobile"><span style="font-family:var(--mono);font-size:.78rem">${esc(l.resenas_cant)} · ${esc(l.resena_ultima||'—')}</span></td>
+      <td>${chipEstado(l.estado)}</td><td>${accionesHTML(l,i)}</td></tr>`;}).join('')
+  }</tbody></table>`;
+}
+
+function renderKanban(){
+  const fs=filtrados();
+  $('kanban').innerHTML=CONFIG.ESTADOS.map(est=>{
+    const del=fs.filter(l=>l.estado===est);
+    return `<div class="col-k"><h3>${est}<em>${del.length}</em></h3>${
+      del.map(l=>{const i=LEADS.indexOf(l);return `<div class="tarjeta"><b>${esc(l.negocio)}</b>
+        <div class="meta">${esc(l.vertical)} · ${esc(l.zona)} · score ${esc(l.score)}</div>
+        ${accionesHTML(l,i)}</div>`;}).join('')||'<div style="color:var(--tinta3);font-size:.74rem">—</div>'
+    }</div>`;
+  }).join('');
+}
+
+function renderTodo(){ renderLista(); renderKanban(); }
+
+/* ============ TRASPASO A SKILLS ============ */
+function promptTraspaso(l,tipo){
+  const base=`Prospecto del Radar de Prospección de El Faro:
+- Negocio: ${l.negocio}
+- Vertical: ${l.vertical} · Zona: ${l.zona}, ${l.pais}
+- Señal web: ${l.senales_web}${l.web_url?` (${l.web_url})`:''}
+- Reseñas: ${l.resenas_cant} (última: ${l.resena_ultima||'s/d'}) · Instagram: ${l.actividad_ig||'s/d'}
+- Contacto: ${l.contacto||'sin contacto visible'}
+- Score: ${l.score} · Notas: ${l.notas||'—'}`;
+  return tipo==='ficha'
+    ? `Corré el-faro-ficha-nicho para este prospecto (nunca tuvo web propia):\n\n${base}\n\nDespués de aprobar la ficha seguimos con el-faro-primer-mensaje.`
+    : `Corré el-faro-auditoria-tienda sobre ${l.web_url||'(URL en la ficha de Maps)'} — navegá el sitio real, no inventes:\n\n${base}\n\nDespués de la auditoría seguimos con el-faro-primer-mensaje para vender la Auditoría de Tienda.`;
+}
+function copiar(texto){
+  const fin=()=>toast('Prompt copiado — pegalo en un chat nuevo');
+  if(navigator.clipboard?.writeText){ navigator.clipboard.writeText(texto).then(fin).catch(()=>fallback()); }
+  else fallback();
+  function fallback(){
+    const ta=document.createElement('textarea'); ta.value=texto; document.body.appendChild(ta);
+    ta.select(); try{document.execCommand('copy');fin();}catch(e){ prompt('Copiá el prompt:',texto); }
+    ta.remove();
+  }
+}
+let toastT;
+function toast(msg){ const t=$('toast'); t.textContent=msg; t.classList.add('visible');
+  clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('visible'),2400); }
+
+/* ============ CALCULADORA ============ */
+function leerCalc(){
+  const rv=n=>document.querySelector(`input[name=${n}]:checked`)?.value;
+  return { web:rv('cw'), resenaUltima:rv('cr'), resenasCant:rv('cc'), ig:rv('ci'),
+           whatsapp:$('calc-wsp').checked, horario:$('calc-horario').checked };
+}
+function renderCalc(){
+  const s=leerCalc(), n=faroScore(s);
+  $('calc-num').textContent=n;
+  $('calc-clas').textContent=faroClasifica(n);
+  $('calc-detalle').textContent = n>=70?'Al pipeline esta semana.':n>=50?'Al pipeline, cola normal.':'Descartar o dejar anotado con razón.';
+}
+
+/* ============ CARGA DE DATOS ============ */
+async function cargar(){
+  if(!CONFIG.CSV_URL){
+    LEADS=DEMO; MODO_DEMO=true; $('aviso-demo').hidden=false;
+    $('fuente-estado').innerHTML='fuente: <b>demo</b>'; renderTodo(); return;
+  }
+  $('fuente-estado').textContent='cargando…';
+  try{
+    const r=await fetch(CONFIG.CSV_URL+(CONFIG.CSV_URL.includes('?')?'&':'?')+'t='+Date.now());
+    if(!r.ok) throw new Error(r.status);
+    LEADS=faroParseCSV(await r.text());
+    $('fuente-estado').innerHTML=`fuente: <b>Sheet</b> · ${new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'})}`;
+  }catch(e){
+    LEADS=DEMO; MODO_DEMO=true; $('aviso-demo').hidden=false;
+    $('fuente-estado').innerHTML='fuente: <b>demo</b> (falló la Sheet — revisá la URL publicada)';
+  }
+  renderTodo();
+}
+
+/* ============ EVENTOS ============ */
+document.addEventListener('DOMContentLoaded',()=>{
+  ['f-vertical','f-pais','f-estado','f-texto'].forEach(id=>$(id).addEventListener('input',renderTodo));
+  $('f-score').addEventListener('input',()=>{ $('f-score-val').textContent=$('f-score').value; renderTodo(); });
+  document.querySelectorAll('nav [data-vista]').forEach(b=>b.addEventListener('click',()=>{
+    document.querySelectorAll('nav [data-vista]').forEach(x=>x.classList.remove('activa'));
+    b.classList.add('activa');
+    ['lista','pipeline','calc'].forEach(v=>$('vista-'+v).hidden=(v!==b.dataset.vista));
+  }));
+  document.body.addEventListener('click',e=>{
+    const b=e.target.closest('[data-accion]'); if(!b) return;
+    copiar(promptTraspaso(LEADS[+b.dataset.i], b.dataset.accion));
+  });
+  document.querySelectorAll('#vista-calc input').forEach(i=>i.addEventListener('change',renderCalc));
+  $('btn-recargar').addEventListener('click',cargar);
+  $('btn-sheet').addEventListener('click',()=>{
+    if(CONFIG.SHEET_EDIT_URL) window.open(CONFIG.SHEET_EDIT_URL,'_blank');
+    else toast('Configurá SHEET_EDIT_URL en el CONFIG');
+  });
+  renderCalc(); cargar();
+});
+
+/* Expuesto para tests (jsdom) */
+window.faroScore=faroScore; window.faroClasifica=faroClasifica;
+window.faroParseCSV=faroParseCSV; window.faroPrompt=promptTraspaso;
+</script>
+</body>
+</html>
